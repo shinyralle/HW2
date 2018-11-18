@@ -12,7 +12,7 @@ glimpse(species_data)
 
 #CHANGE SPACE TO UNDERSCORE-----------------------------------------------
 names(species_data) <- gsub(" ", "_", names(species_data)) 
-#byter alla kolumn-namn med innehållande mellanslag till underlines istället
+  #byter alla kolumn-namn med innehållande mellanslag till underlines istället
 
 
 #Ändra format till as.Date ----------------------------------------------
@@ -21,7 +21,7 @@ species_data <- species_data %>%
   #Ändra format till DATE på 'Start'-kolumnen
 
 species_data <- species_data %>%
-  mutate( End = as.Date(Start, "%d/%m/%Y")) 
+  mutate( End = as.Date(End, "%d/%m/%Y")) 
   #Ändra format till DATE på 'End'-kolumnen
 
 
@@ -160,15 +160,73 @@ booli <- read_csv("/Users/admin/Desktop/Statistisk Databehandling/Homework/HW_da
 glimpse(booli)
 
 
+# =================(1)=====================
+ggplot(booli) + geom_point(aes(x=livingArea, y=soldPrice)) + geom_smooth(aes(x=livingArea, y=soldPrice)) 
+#We observe two extreme values that are >  8750000 threshold
+
+#Pick out row number of extreme values:
+extremerow=which(booli$soldPrice > 8750000) #row nr = [6 60]
+
+booli$soldPrice[extremerow] #==> [1] 8950000 9250000
+
+# =================(2)=====================
+
+#CREATE sq/price-column
+booli = booli %>%
+  mutate(pricePersquare=round(soldPrice/as.integer(livingArea)))
+
+#double check 6 first elements
+head(booli$pricePersquare) 
+
+#---------regression-line-------------
+regression=lm(booli$pricePersquare ~ as.Date(booli$soldDate))
+int=regression$coefficients[1]
+slo=regression$coefficients[2]
+#-------------------------------------  
+
+#plot sq/price with 2 types of fitting line:
+ggplot(booli) + geom_point(aes(x=soldDate, y=pricePersquare)) +geom_smooth(aes(x=soldDate, y=pricePersquare)) +
+    geom_abline(intercept = int, slope = slo, col="red")
+
+
+# =================(3)=====================
+
+#Separate adress and adress number 
+booli2=separate(booli, location.address.streetAddress, c("Adress", "Nr"))
+
+#Make adress into factors
+booli2$Adress <- as.factor(booli2$Adress)
+booli2$Adress #==> 4 Levels: Docentbacken Ekhagsvägen Torphagsvägen Åminnevägen
+
+#Make constructionYear into factors
+booli2$constructionYear = as.factor(booli2$constructionYear)
+booli2$constructionYear #==> Levels: 1931 1934 1935 1936 1937 1939 1968 1969
+
+#Create table of how how many appartments where built under each year
+#for each adress.
+adress_year=table(booli2$Adress,booli2$constructionYear)
+adress_year=as.data.frame(adress_year)
+adress_year=spread(adress_year, Var2,Freq)
+
+# =================(4)=====================
+#From what year are appartments 
+ggplot(booli,aes(x=as.factor(constructionYear))) + 
+  geom_bar()
+
+ggplot(booli,aes(x=livingArea)) + 
+  geom_histogram(binwidth = 10)
+
+
+# =================(5)=====================
+
+realestate=table(as.factor(booli$source.name))
+realestate=as.data.frame(realestate)
+colnames(realestate)=c("Agency", "Count")
+
+Notar <- booli2 %>%
+  filter(source.name == c("Notar", "Svensk Fastighetsförmedling"  ))
+
+ggplot(Notar, aes(x = source.name, y = soldPrice)) + geom_boxplot() 
 
 
 
-filter_slutpris <- booli$soldPrice
-filter_bostadsyta <- booli$livingArea
-plot(filter_slutpris, filter_bostadsyta)
-lines(x = c(0, 6.146), y = c(0, 100), col = "blue")
-
-ggplot() + geom_point(aes(x=filter_slutpris, y=filter_bostadsyta)) + geom_smooth(aes(x=filter_slutpris, y=filter_bostadsyta)) 
-
-which(filter_bostadsyta > 140)
-booli$livingArea[60]
