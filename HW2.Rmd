@@ -1,0 +1,13 @@
+---
+title: "Homework 2"
+Author: "Rahul Duggal"
+Date: "18 november 2018"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Birdwatching
+
